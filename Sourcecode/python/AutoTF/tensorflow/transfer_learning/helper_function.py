@@ -1,8 +1,8 @@
 import tensorflow as tf
 
-import requests
 from PIL import Image
-from io import BytesIO
+from PIL import ImageDraw
+from PIL import ImageFont
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -55,3 +55,13 @@ def build_dataset(subset, data_dir, IMAGE_SIZE):
         image_size=IMAGE_SIZE,
         batch_size=1)
     return dataset
+
+def add_text_to_image(img_path, txt):
+    image = Image.open(img_path)
+    # Call draw Method to add 2D graphics in an image
+    I1 = ImageDraw.Draw(image)
+    
+    fnt_size = int(0.1 * image.size[0])
+    fnt = ImageFont.truetype("arial.ttf", fnt_size)
+    I1.text((10, 10), txt, font=fnt, fill =(255, 0, 0))
+    image.show()
