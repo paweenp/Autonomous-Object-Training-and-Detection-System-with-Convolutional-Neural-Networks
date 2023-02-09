@@ -28,8 +28,8 @@ with open(labels_file) as f:
   labels = f.readlines()
   classes = [l.strip() for l in labels]
 
-#img_path = "../data/cat/Cat_November_2010-1a.jpg"
-img_path = "../data/otto-1/otto.1.jpg"
+img_path = "../data/cat/Cat_November_2010-1a.jpg"
+#img_path = "../data/otto/otto.1.jpg"
 
 image, original_image = load_image_from_local(
     img_path, 

@@ -57,7 +57,7 @@ val_ds = val_ds.map(lambda images, labels:
 do_fine_tuning = False
 
 # Load saved model
-model_path = "models/efficientnet_b0_classification_1"
+model_path = "models/imagenet_resnet_v1_50_classification_5"
 model_image_size = 224
 image_size = model_image_size
 #classifier = tf.saved_model.load(model_path)
@@ -83,13 +83,15 @@ model.compile(
   loss=tf.keras.losses.CategoricalCrossentropy(from_logits=True, label_smoothing=0.1),
   metrics=['accuracy'])
 
+epoch_num = 10
 steps_per_epoch = train_size // BATCH_SIZE
 validation_steps = valid_size // BATCH_SIZE
 hist = model.fit(
     train_ds,
-    epochs=1, steps_per_epoch=steps_per_epoch,
+    epochs=epoch_num, steps_per_epoch=steps_per_epoch,
     validation_data=val_ds,
     validation_steps=validation_steps).history
+
 
 plt.figure()
 plt.ylabel("Loss (training and validation)")
@@ -120,7 +122,7 @@ print("True label: " + class_names[true_index])
 print("Predicted label: " + class_names[predicted_index])
 
 # save model into hdf5 format
-export_path = "train_model.h5"
+export_path = "train_model_imagenet_resnet_v1_50_classification_5.h5"
 
 #tf.keras.models.save_model("./train_model")
 
@@ -133,6 +135,4 @@ tf.keras.models.save_model(
     signatures=None,
     options=None
 )
-
-print("Finished saving model")
 
