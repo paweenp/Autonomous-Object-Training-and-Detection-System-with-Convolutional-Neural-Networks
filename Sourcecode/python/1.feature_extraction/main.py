@@ -13,24 +13,51 @@
 # 0. Import libraries
 import tensorflow as tf
 import matplotlib.pylab as plt
-import datetime
-import time
+import os
 from helper_function import build_dataset
 #from keras import layers
 #from keras.applications.mobilenet_v2 import MobileNetV2
 
 # 1. Build dataset from local files from folder
+#PATH = "../../../../Dataset/dataset_1"
 PATH = "../../../../Dataset/cats_and_dogs"
 BATCH_SIZE = 32
 IMG_SIZE = (160, 160)
 
-train_ds, val_ds, class_names = build_dataset(PATH, BATCH_SIZE, IMG_SIZE)
+#train_ds, val_ds, class_names = build_dataset(PATH, BATCH_SIZE, IMG_SIZE)
+train_dir = os.path.join(PATH, 'train')
+validation_dir = os.path.join(PATH, 'validation')
+
+train_dataset = tf.keras.utils.image_dataset_from_directory(train_dir,
+                                                            shuffle=True,
+                                                            batch_size=BATCH_SIZE,
+                                                            image_size=IMG_SIZE)
+
+
+validation_dataset = tf.keras.utils.image_dataset_from_directory(validation_dir,
+                                                                 shuffle=True,
+                                                                 batch_size=BATCH_SIZE,
+                                                                 image_size=IMG_SIZE)
+
+class_names = train_dataset.class_names
 num_classes = len(class_names)
 
-for image_batch, labels_batch in train_ds:
-  print(image_batch.shape)
-  print(labels_batch.shape)
-  break
+val_batches = tf.data.experimental.cardinality(validation_dataset)
+test_dataset = validation_dataset.take(val_batches // 5)
+validation_dataset = validation_dataset.skip(val_batches // 5)
+
+AUTOTUNE = tf.data.AUTOTUNE
+
+train_dataset = train_dataset.prefetch(buffer_size=AUTOTUNE)
+validation_dataset = validation_dataset.prefetch(buffer_size=AUTOTUNE)
+test_dataset = test_dataset.prefetch(buffer_size=AUTOTUNE)
+
+
+
+#for image_batch, labels_batch in train_ds:
+  #print(image_batch.shape)
+  #print(labels_batch.shape)
+  #break
 
 # 2. Load pretrained model
 IMG_SHAPE = IMG_SIZE + (3,)
@@ -38,21 +65,31 @@ base_model = tf.keras.applications.MobileNetV2(input_shape=IMG_SHAPE,
                          include_top=False,
                          weights="imagenet")
 
+base_model.summary()
+
 preprocess_input = tf.keras.applications.mobilenet_v2.preprocess_input
+rescale = tf.keras.layers.Rescaling(1./127.5, offset=-1)
+
 data_augmentation = tf.keras.Sequential([
   tf.keras.layers.RandomFlip('horizontal'),
   tf.keras.layers.RandomRotation(0.2),
 ])
 
+
 # Freeze the model
 base_model.trainable = False
+image_batch, label_batch = next(iter(train_dataset))
 feature_batch = base_model(image_batch)
+print("prediction batch : "+str(feature_batch.shape))
 
 # Add classification head to the model
 global_avg_layer = tf.keras.layers.GlobalAveragePooling2D()
 feature_batch_avg = global_avg_layer(feature_batch)
-prediction_layer = tf.keras.layers.Dense(num_classes)
-predicted_batch = prediction_layer(feature_batch_avg)
+
+prediction_layer = tf.keras.layers.Dense(1)
+#prediction_layer = tf.keras.layers.Dense(num_classes)
+prediction_batch = prediction_layer(feature_batch_avg)
+print("prediction batch : "+str(prediction_batch.shape))
 
 # Prepare the model
 inputs = tf.keras.Input(shape=(160, 160, 3))
@@ -64,32 +101,26 @@ x = tf.keras.layers.Dropout(0.2)(x)
 outputs = prediction_layer(x)
 model = tf.keras.Model(inputs, outputs)
 
+
 # 3. Train the model
 base_learning_rate = 0.0001
 model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=base_learning_rate),
               loss=tf.keras.losses.BinaryCrossentropy(from_logits=True),
+              #loss=tf.keras.losses.CategoricalCrossentropy(),
               metrics=['accuracy'])
-
-predictions = model(image_batch)
-predictions.shape
-
-model.compile(
-  optimizer=tf.keras.optimizers.Adam(),
-  loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
-  metrics=['accuracy'])
 
 model.summary()
 print("trainable variables : "+str(len(model.trainable_variables)))
 
 initial_epochs = 10
-loss0, accuracy0 = model.evaluate(val_ds)
+loss0, accuracy0 = model.evaluate(validation_dataset)
 
 print("initial loss: {:.2f}".format(loss0))
 print("initial accuracy: {:.2f}".format(accuracy0))
 
-history = model.fit(train_ds,
+history = model.fit(train_dataset,
                     epochs=initial_epochs,
-                    validation_data=val_ds)
+                    validation_data=validation_dataset)
 
 # 4. Evaluate the model performances
 
