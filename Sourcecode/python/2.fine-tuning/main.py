@@ -27,7 +27,7 @@ def set_parameter_requires_grad(model, feature_extracting):
         for param in model.parameters():
             param.requires_grad = False
 
-def train_model(model, dataloaders, criterion, optimizer, num_epochs=25):
+def train_model(model, dataloaders, criterion, optimizer, num_epochs):
     since = time.time()
 
     val_acc_history = []
@@ -110,6 +110,42 @@ def initialize_model(num_classes, feature_extract, use_pretrained=True):
 
     return model
 
+# Lwf related functions
+def train_lwf(model, dataloaders_old, dataloaders_new, criterion, optimizer, num_epochs):
+    since = time.time()
+    
+    val_acc_history = []
+
+    best_model_wts = copy.deepcopy(model.state_dict())
+    best_acc = 0.0
+    
+    for epoch in range(num_epochs):
+        print('Epoch {}/{}'.format(epoch, num_epochs - 1))
+        print('-' * 10)
+        
+        # Each epoch has a training and validation phase
+        for phase in ['train', 'validation']:
+            if phase == 'train':
+                model.train()  # Set model to training mode
+            else:
+                model.eval()   # Set model to evaluate mode
+
+            running_loss = 0.0
+            running_corrects = 0
+            
+            # Iterate over data.
+            for inputs, labels in dataloaders_new[phase]:
+                inputs = inputs.to(device)
+                labels = labels.to(device)
+                
+                # zero the parameter gradients
+                optimizer.zero_grad()
+                
+                 # forward
+                # track history if only in train
+                with torch.set_grad_enabled(phase == 'train'):
+                    old_logits = model(inputs)
+    
 
 
 
@@ -189,7 +225,17 @@ def main():
         'model': model.state_dict(),
         'optim' : optimizer_ft,        
     }
-    torch.save(state, './models/alenet_finetune.pth')
+    torch.save(state, './models/alexnet_finetune.pth')
+    
+    
+    # LWF begins here
+    
+    
+    
+    
+    
+    
+    
     
 if __name__ == '__main__':
     main()
