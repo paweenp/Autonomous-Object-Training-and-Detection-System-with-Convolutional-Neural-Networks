@@ -15,7 +15,6 @@ from model import Model
 #       -   'Train'
 #       -   'Validation'
 #data_dir = '../../../../Dataset/flowers_dataset/flowers_1/'
-
 image_path = Path("../../../../Dataset/flowers/")
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
