@@ -155,7 +155,7 @@ where ⊙ denotes the element-wise product and 𝑓′(𝑙) is the derivative o
 
 Once the 𝛿(𝑙) are computed, the gradient of the loss with respect to the parameters can be easily obtained as:
 
-$∇W(𝑙)𝐿=δ(𝑙) (X(l−1))T $ </br>
+$∇W(𝑙)𝐿=δ(𝑙) (X(l−1))T$ </br>
 $∇b(𝑙)𝐿=δ(𝑙)$
 
 These gradients are used to update the weights and biases during the learning process (Rumelhart et al., 1986).
